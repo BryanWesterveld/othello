@@ -49,17 +49,17 @@ defmodule OthelloEngine.Board do
         Agent.start_link(fn -> %Board{grid: init_grid(), history: []} end)
     end
 
-    defp calculate_move_line_r(_cells, :none, moves) do
-        moves
+    defp calculate_move_line_r(_cells, :none, _moves) do
+        []
     end
 
 
-    defp calculate_move_line_r([], _color, moves) do
-        moves
+    defp calculate_move_line_r([], _color, _moves) do
+        []
     end
 
-    defp calculate_move_line_r([{_r, _c, :none} | _tail], _color, moves) do
-        moves
+    defp calculate_move_line_r([{_r, _c, :none} | _tail], _color, _moves) do
+        []
     end
 
     defp calculate_move_line_r([{_r, _c, color} | _tail], color, moves) do
@@ -111,12 +111,11 @@ defmodule OthelloEngine.Board do
         0..row-1
     end
 
-    defp get_range(row, col, :top_right) when row >= col do
-        # 0..8-col-1
-        0..row-1
+    defp get_range(row, col, :top_right) when row >= 9-col do
+        0..9-col-1
     end
 
-    defp get_range(row, col, :top_right) when row < col do
+    defp get_range(row, col, :top_right) when row < 9-col do
         0..row-1
     end
 
@@ -128,12 +127,12 @@ defmodule OthelloEngine.Board do
         0..9-row-1
     end
 
-    defp get_range(row, col, :bottom_right) when row >= col do
-        0..9-row-1
+    defp get_range(row, col, :bottom_right) when 9 - row >= 9 - col do
+        0..9-col-1
     end
 
-    defp get_range(row, col, :bottom_right) when row < col do
-        0..9-col-1
+    defp get_range(row, col, :bottom_right) when 9 - row < 9 - col do
+        0..9-row-1
     end
 
     defp calculate_move_diagonal(grid, row, col, color) do
@@ -145,13 +144,16 @@ defmodule OthelloEngine.Board do
                         {row - n, col + n, Map.get(grid, key(row - n, col + n))}
                     end),
             bl <- Enum.map(get_range(row, col, :bottom_left), fn n ->
-                        {row + n, col - n, Map.get(grid, key(row - n, col - n))}
+                        {row + n, col - n, Map.get(grid, key(row + n, col - n))}
                     end),
             br <- Enum.map(get_range(row, col, :bottom_right), fn n ->
-                        {row + n, col + n, Map.get(grid, key(row - n, col - n))}
+                        {row + n, col + n, Map.get(grid, key(row + n, col + n))}
                     end)
         ) do
-            calculate_move_line(tl, color)
+            calculate_move_line(tl, color) ++
+            calculate_move_line(tr, color) ++
+            calculate_move_line(bl, color) ++
+            calculate_move_line(br, color)
         end
     end
 
