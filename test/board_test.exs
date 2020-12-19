@@ -1,6 +1,5 @@
 defmodule BoardTest do
     use ExUnit.Case
-    doctest OthelloEngine
 
     alias OthelloEngine.Board
 
