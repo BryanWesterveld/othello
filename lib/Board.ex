@@ -12,6 +12,10 @@ defmodule OthelloEngine.Board do
     alias OthelloEngine.Board
 
 
+    ###
+    # Converts string or integer indices to an atom. Accepts only legal
+    # coordinates to prevent filling up the atom table with dynamically
+    # generated atoms.
     defp key(row, col) when row in @indices and col in @indices do
         String.to_atom("#{row}#{col}")
     end
@@ -21,12 +25,17 @@ defmodule OthelloEngine.Board do
     end
 
 
+    ###
+    # Returns a list of keys to index the board.
     defp keys() do
         for row <- 1..8, col <- 1..8 do
             key(row, col)
         end
     end
 
+
+    ###
+    # Returns the opposite color, either black or white.
     defp opposite_color(:white) do
         :black
     end
@@ -35,14 +44,18 @@ defmodule OthelloEngine.Board do
         :white
     end
 
+
+    @doc """
+    Returns the current state of the board. Used for debugging only.
+    """
     def get_state(board_pid) do
         Agent.get(board_pid, fn state -> state.grid end)
     end
 
-    @doc """
-    Initializes a new grid with only the center stones placed.
-    """
-    def init_grid() do
+
+    ###
+    # Initializes a new grid with only the center stones placed.
+    defp init_grid() do
         Enum.reduce(keys(), %{}, fn(key, grid) ->
             Map.put_new(grid, key, :none)
         end)
@@ -53,17 +66,20 @@ defmodule OthelloEngine.Board do
     end
 
 
-    @doc """
-    Starts an agent to keep track of the board.
-    """
+    ###
+    # Starts an agent to keep track of the board.
     def start_link() do
         Agent.start_link(fn -> %Board{grid: init_grid(), history: []} end)
     end
 
+
+    ###
+    # Recursive helper function to return the cells that would get flipped.
+    # Keeps looking until it finds a cell that makes the move legal or returns
+    # early with an empty list.
     defp calculate_move_line_r(_cells, :none, _moves) do
         []
     end
-
 
     defp calculate_move_line_r([], _color, _moves) do
         []
@@ -82,10 +98,18 @@ defmodule OthelloEngine.Board do
     end
 
 
+    ###
+    # Returns a list of all the cells that would get flipped in a single
+    # line.
     defp calculate_move_line([_center | cells], color) do
         calculate_move_line_r(cells, color, [])
     end
 
+
+    ###
+    # Returns a list of cells that would get flipped in a horizontal line.
+    # Checks both to the left and to the right of where the new stone would be
+    # placed.
     defp calculate_move_horizontal(grid, row, col, color) do
         with(
             left <- Enum.map(col..1, fn c ->
@@ -100,6 +124,10 @@ defmodule OthelloEngine.Board do
         end
     end
 
+
+    ###
+    # Returns a list of cells that would get flipped in a vertical line.
+    # Checks both up and down of where the new stone would be placed.
     defp calculate_move_vertical(grid, row, col, color) do
         with(
             up <- Enum.map(row..1, fn r ->
@@ -114,6 +142,10 @@ defmodule OthelloEngine.Board do
         end
     end
 
+
+    ###
+    # Returns valid indices that must be checked to find if a move is legal.
+    # Could be refactored as every quadrant is the same with some axis flipped.
     defp get_range(row, col, :top_left) when row >= col do
         0..col-1
     end
@@ -146,6 +178,12 @@ defmodule OthelloEngine.Board do
         0..9-row-1
     end
 
+
+    ###
+    # Returns a list of cells that would get flipped in a diagonal line. Checks
+    # all four direction of where the new stone would be placed. The get_range
+    # function is used to get valid indices to prevent converting illegal indices
+    # to atoms and filling up the atom table.
     defp calculate_move_diagonal(grid, row, col, color) do
         with(
             tl <- Enum.map(get_range(row, col, :top_left), fn n ->
@@ -168,10 +206,17 @@ defmodule OthelloEngine.Board do
         end
     end
 
+
+    ###
+    # Returns the value of a cell.
     defp get_cell_value(grid, row, col) do
         Map.get(grid, key(row, col))
     end
 
+
+    @doc """
+    Returns the value of a cell in the grid.
+    """
     def get_grid_cell_value(board_pid, row, col) do
         grid = Agent.get(board_pid, fn state -> state.grid end)
 
@@ -179,6 +224,11 @@ defmodule OthelloEngine.Board do
     end
 
 
+    @doc """
+    Checks if a player has legal moves. If no moves are possible he must pass
+    and the game ends when neither player can move. This may be well before
+    all 64 stones have been placed.
+    """
     def can_move?(board_pid, color) do
         moves = for row <- 1..8, col <- 1..8 do
             calculate_move(board_pid, row, col, color)
@@ -209,6 +259,8 @@ defmodule OthelloEngine.Board do
     end
 
 
+    ###
+    # Flips the color of a cell.
     defp flip_piece(board_pid, {row, col, color}) do
         opposite_color = opposite_color(color)
 
@@ -220,11 +272,15 @@ defmodule OthelloEngine.Board do
     end
 
 
+    ###
+    # Flips the color of a list of cells.
     defp flip_pieces(board_pid, pieces) do
         Enum.map(pieces, fn piece -> flip_piece(board_pid, piece) end)
     end
 
 
+    ###
+    # Updates the state to place a new stone on the board.
     defp set_grid_cell_value(board_pid, row, col, color) do
         Agent.update(board_pid,
             fn state -> %{history: [],
@@ -234,9 +290,8 @@ defmodule OthelloEngine.Board do
     end
 
 
-    @doc """
-    Makes a move or returns :not_possible.
-    """
+    ###
+    # Makes a move or returns :not_possible.
     def make_move(board_pid, row, col, color) do
         case calculate_move(board_pid, row, col, color) do
             []      -> :not_possible
@@ -246,6 +301,9 @@ defmodule OthelloEngine.Board do
     end
 
 
+    ###
+    # Return a string representation of a cell. A filled circle is black and a
+    # border is white.
     defp string_coordinate(grid, row, col) do
         case get_cell_value(grid, row, col) do
             :black -> "●"
@@ -255,7 +313,8 @@ defmodule OthelloEngine.Board do
         end
     end
 
-
+    ###
+    # Return a string representation of a row of cells.
     defp to_string_row(grid, row) do
         str = Enum.map(1..8, fn col -> string_coordinate(grid, row, col) end)
         |> Enum.join(" | ")
@@ -266,11 +325,10 @@ defmodule OthelloEngine.Board do
     end
 
 
-    @doc """
-    Converts the entire grid to a string. Used to print the state of the game
-    for debugging. A hollow circle is used to represent white stones, a filled
-    circle is used to represent black stones.
-    """
+    ###
+    # Converts the entire grid to a string. Used to print the state of the game
+    # for debugging. A hollow circle is used to represent white stones, a filled
+    # circle is used to represent black stones.
     def to_string(board_pid) do
         grid = Agent.get(board_pid, fn state -> state.grid end)
 
