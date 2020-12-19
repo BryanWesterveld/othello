@@ -2,14 +2,11 @@ defmodule OthelloEngine.Board do
     @moduledoc """
     The Board module holds the state of an Othello game. The grid is modelled
     as a dictionary with the rows and columns as keys. To keep track of who
-    owns what cell, an atom for the colour is used. The history keeps track
-    of all moves to help with debugging or exporting a game.
+    owns what cell, an atom for the colour is used.
     """
 
-    defstruct grid: :none, history: :none
-    @indices ~w(1 2 3 4 5 6 7 8)
 
-    alias OthelloEngine.Board
+    @indices ~w(1 2 3 4 5 6 7 8)
 
 
     ###
@@ -49,7 +46,7 @@ defmodule OthelloEngine.Board do
     Returns the current state of the board. Used for debugging only.
     """
     def get_state(board_pid) do
-        Agent.get(board_pid, fn state -> state.grid end)
+        Agent.get(board_pid, fn state -> state end)
     end
 
 
@@ -69,7 +66,7 @@ defmodule OthelloEngine.Board do
     ###
     # Starts an agent to keep track of the board.
     def start_link() do
-        Agent.start_link(fn -> %Board{grid: init_grid(), history: []} end)
+        Agent.start_link(fn -> init_grid() end)
     end
 
 
@@ -218,7 +215,7 @@ defmodule OthelloEngine.Board do
     Returns the value of a cell in the grid.
     """
     def get_grid_cell_value(board_pid, row, col) do
-        grid = Agent.get(board_pid, fn state -> state.grid end)
+        grid = Agent.get(board_pid, fn state -> state end)
 
         get_cell_value(grid, row, col)
     end
@@ -248,7 +245,7 @@ defmodule OthelloEngine.Board do
     list if there are no possible moves.
     """
     def calculate_move(board_pid, row, col, color) do
-        grid = Agent.get(board_pid, fn state -> state.grid end)
+        grid = Agent.get(board_pid, fn state -> state end)
 
         case Map.get(grid, key(row, col)) do
             :none -> calculate_move_horizontal(grid, row, col, color) ++
@@ -265,9 +262,8 @@ defmodule OthelloEngine.Board do
         opposite_color = opposite_color(color)
 
         Agent.update(board_pid,
-            fn state -> %{history: [],
-                          grid: Map.update!(state.grid, key(row, col),
-                                    fn _ -> opposite_color end)}
+            fn state -> Map.update!(state, key(row, col),
+                            fn _ -> opposite_color end)
             end)
     end
 
@@ -283,9 +279,8 @@ defmodule OthelloEngine.Board do
     # Updates the state to place a new stone on the board.
     defp set_grid_cell_value(board_pid, row, col, color) do
         Agent.update(board_pid,
-            fn state -> %{history: [],
-                          grid: Map.update!(state.grid, key(row, col),
-                                    fn _ -> color end)}
+            fn state -> Map.update!(state, key(row, col),
+                            fn _ -> color end)
             end)
     end
 
@@ -330,7 +325,7 @@ defmodule OthelloEngine.Board do
     # for debugging. A hollow circle is used to represent white stones, a filled
     # circle is used to represent black stones.
     def to_string(board_pid) do
-        grid = Agent.get(board_pid, fn state -> state.grid end)
+        grid = Agent.get(board_pid, fn state -> state end)
 
         str = Enum.map(1..8, fn row -> to_string_row(grid, row) end)
         |> Enum.join("")
