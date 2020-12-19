@@ -27,6 +27,17 @@ defmodule OthelloEngine.Board do
         end
     end
 
+    defp opposite_color(:white) do
+        :black
+    end
+
+    defp opposite_color(:black) do
+        :white
+    end
+
+    def get_state(board_pid) do
+        Agent.get(board_pid, fn state -> state.grid end)
+    end
 
     @doc """
     Initializes a new grid with only the center stones placed.
@@ -157,6 +168,35 @@ defmodule OthelloEngine.Board do
         end
     end
 
+    defp get_cell_value(grid, row, col) do
+        Map.get(grid, key(row, col))
+    end
+
+    def get_grid_cell_value(board_pid, row, col) do
+        grid = Agent.get(board_pid, fn state -> state.grid end)
+
+        get_cell_value(grid, row, col)
+    end
+
+
+    def can_move?(board_pid, color) do
+        moves = for row <- 1..8, col <- 1..8 do
+            calculate_move(board_pid, row, col, color)
+        end
+
+        Enum.reduce_while(moves, false, fn move, acc ->
+            case move do
+                []  -> {:cont, acc}
+                _   -> {:halt, true}
+            end
+        end)
+    end
+
+
+    @doc """
+    Gets all the possible moves for a row, column and color. Returns an empty
+    list if there are no possible moves.
+    """
     def calculate_move(board_pid, row, col, color) do
         grid = Agent.get(board_pid, fn state -> state.grid end)
 
@@ -169,11 +209,49 @@ defmodule OthelloEngine.Board do
     end
 
 
+    defp flip_piece(board_pid, {row, col, color}) do
+        opposite_color = opposite_color(color)
+
+        Agent.update(board_pid,
+            fn state -> %{history: [],
+                          grid: Map.update!(state.grid, key(row, col),
+                                    fn _ -> opposite_color end)}
+            end)
+    end
+
+
+    defp flip_pieces(board_pid, pieces) do
+        Enum.map(pieces, fn piece -> flip_piece(board_pid, piece) end)
+    end
+
+
+    defp set_grid_cell_value(board_pid, row, col, color) do
+        Agent.update(board_pid,
+            fn state -> %{history: [],
+                          grid: Map.update!(state.grid, key(row, col),
+                                    fn _ -> color end)}
+            end)
+    end
+
+
+    @doc """
+    Makes a move or returns :not_possible.
+    """
+    def make_move(board_pid, row, col, color) do
+        case calculate_move(board_pid, row, col, color) do
+            []      -> :not_possible
+            pieces  -> flip_pieces(board_pid, pieces)
+                       set_grid_cell_value(board_pid, row, col, color)
+        end
+    end
+
+
     defp string_coordinate(grid, row, col) do
-        case Map.get(grid, key(row, col)) do
+        case get_cell_value(grid, row, col) do
             :black -> "●"
             :white -> "○"
-            _      -> " "
+            :none  -> " "
+            _      -> "x"
         end
     end
 
