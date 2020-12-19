@@ -5,8 +5,88 @@ defmodule OthelloEngine.Board do
     owns what cell, an atom for the colour is used.
     """
 
-
     @indices ~w(1 2 3 4 5 6 7 8)
+
+
+    @doc """
+    Starts an agent to keep track of the board.
+    """
+    def start_link() do
+        Agent.start_link(fn -> init_grid() end)
+    end
+
+
+    @doc """
+    Resets the board.
+    """
+    def reset(board_pid) do
+        Agent.update(board_pid, fn _ -> init_grid() end)
+    end
+
+
+    @doc """
+    Returns the current state of the board. Used for debugging or exporting
+    the state.
+    """
+    def get_state(board_pid) do
+        Agent.get(board_pid, fn state -> state end)
+    end
+
+
+    @doc """
+    Returns the value of a cell in the grid.
+    """
+    def get_grid_cell_value(board_pid, row, col) do
+        grid = Agent.get(board_pid, fn state -> state end)
+
+        get_cell_value(grid, row, col)
+    end
+
+
+    @doc """
+    Checks if a player has legal moves. If no moves are possible he must pass
+    and the game ends when neither player can move. This may be well before
+    all 64 stones have been placed.
+    """
+    def can_move?(board_pid, color) do
+        moves = for row <- 1..8, col <- 1..8 do
+            calculate_move(board_pid, row, col, color)
+        end
+
+        Enum.reduce_while(moves, false, fn move, acc ->
+            case move do
+                []  -> {:cont, acc}
+                _   -> {:halt, true}
+            end
+        end)
+    end
+
+
+    @doc """
+    Makes a move or returns :not_possible.
+    """
+    def make_move(board_pid, row, col, color) do
+        case calculate_move(board_pid, row, col, color) do
+            []      -> :not_possible
+            pieces  -> flip_pieces(board_pid, pieces)
+                       set_grid_cell_value(board_pid, row, col, color)
+        end
+    end
+
+
+    @doc """
+    Converts the entire grid to a string. Used to print the state of the game
+    for debugging. A hollow circle is used to represent white stones, a filled
+    circle is used to represent black stones.
+    """
+    def to_string(board_pid) do
+        grid = Agent.get(board_pid, fn state -> state end)
+
+        str = Enum.map(1..8, fn row -> to_string_row(grid, row) end)
+        |> Enum.join("")
+
+        "+---+---+---+---+---+---+---+---+\n" <> str
+    end
 
 
     ###
@@ -42,14 +122,6 @@ defmodule OthelloEngine.Board do
     end
 
 
-    @doc """
-    Returns the current state of the board. Used for debugging only.
-    """
-    def get_state(board_pid) do
-        Agent.get(board_pid, fn state -> state end)
-    end
-
-
     ###
     # Initializes a new grid with only the center stones placed.
     defp init_grid() do
@@ -60,13 +132,6 @@ defmodule OthelloEngine.Board do
         |> Map.update!(key("4", "5"), fn _ -> :black end)
         |> Map.update!(key("5", "4"), fn _ -> :black end)
         |> Map.update!(key("5", "5"), fn _ -> :white end)
-    end
-
-
-    ###
-    # Starts an agent to keep track of the board.
-    def start_link() do
-        Agent.start_link(fn -> init_grid() end)
     end
 
 
@@ -212,35 +277,6 @@ defmodule OthelloEngine.Board do
 
 
     @doc """
-    Returns the value of a cell in the grid.
-    """
-    def get_grid_cell_value(board_pid, row, col) do
-        grid = Agent.get(board_pid, fn state -> state end)
-
-        get_cell_value(grid, row, col)
-    end
-
-
-    @doc """
-    Checks if a player has legal moves. If no moves are possible he must pass
-    and the game ends when neither player can move. This may be well before
-    all 64 stones have been placed.
-    """
-    def can_move?(board_pid, color) do
-        moves = for row <- 1..8, col <- 1..8 do
-            calculate_move(board_pid, row, col, color)
-        end
-
-        Enum.reduce_while(moves, false, fn move, acc ->
-            case move do
-                []  -> {:cont, acc}
-                _   -> {:halt, true}
-            end
-        end)
-    end
-
-
-    @doc """
     Gets all the possible moves for a row, column and color. Returns an empty
     list if there are no possible moves.
     """
@@ -286,17 +322,6 @@ defmodule OthelloEngine.Board do
 
 
     ###
-    # Makes a move or returns :not_possible.
-    def make_move(board_pid, row, col, color) do
-        case calculate_move(board_pid, row, col, color) do
-            []      -> :not_possible
-            pieces  -> flip_pieces(board_pid, pieces)
-                       set_grid_cell_value(board_pid, row, col, color)
-        end
-    end
-
-
-    ###
     # Return a string representation of a cell. A filled circle is black and a
     # border is white.
     defp string_coordinate(grid, row, col) do
@@ -308,6 +333,7 @@ defmodule OthelloEngine.Board do
         end
     end
 
+
     ###
     # Return a string representation of a row of cells.
     defp to_string_row(grid, row) do
@@ -317,19 +343,5 @@ defmodule OthelloEngine.Board do
         |> Kernel.<>("\n+---+---+---+---+---+---+---+---+\n")
 
         "| " <> str
-    end
-
-
-    ###
-    # Converts the entire grid to a string. Used to print the state of the game
-    # for debugging. A hollow circle is used to represent white stones, a filled
-    # circle is used to represent black stones.
-    def to_string(board_pid) do
-        grid = Agent.get(board_pid, fn state -> state end)
-
-        str = Enum.map(1..8, fn row -> to_string_row(grid, row) end)
-        |> Enum.join("")
-
-        "+---+---+---+---+---+---+---+---+\n" <> str
     end
 end
