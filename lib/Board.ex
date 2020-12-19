@@ -28,7 +28,7 @@ defmodule OthelloEngine.Board do
     Returns the current state of the board. Used for debugging or exporting
     the state.
     """
-    def get_state(board_pid) do
+    def get_board(board_pid) do
         Agent.get(board_pid, fn state -> state end)
     end
 
