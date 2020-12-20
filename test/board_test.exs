@@ -35,10 +35,10 @@ defmodule BoardTest do
     test "Legal moves" do
         {:ok, pid} = Board.start_link()
 
-        assert Board.make_move(pid, 3, 4, :black) == :ok
+        assert Board.make_move(pid, 3, 4, :black) != []
         assert Board.get_grid_cell_value(pid, 3, 4) == :black
 
-        assert Board.make_move(pid, 5, 3, :white) == :ok
+        assert Board.make_move(pid, 5, 3, :white) != []
         assert Board.get_grid_cell_value(pid, 5, 3) == :white
 
         assert Board.can_move?(pid, :black)
@@ -49,10 +49,10 @@ defmodule BoardTest do
     test "No more legal moves" do
         {:ok, pid} = Board.start_link()
 
-        assert Board.make_move(pid, 3, 4, :black) == :ok
+        assert Board.make_move(pid, 3, 4, :black) != []
         assert Board.get_grid_cell_value(pid, 3, 4) == :black
 
-        assert Board.make_move(pid, 6, 5, :black) == :ok
+        assert Board.make_move(pid, 6, 5, :black) != []
         assert Board.get_grid_cell_value(pid, 6, 5) == :black
 
         refute Board.can_move?(pid, :black)
@@ -63,7 +63,7 @@ defmodule BoardTest do
     test "Reset" do
         {:ok, pid} = Board.start_link()
 
-        assert Board.make_move(pid, 3, 4, :black) == :ok
+        assert Board.make_move(pid, 3, 4, :black) != []
         assert Board.get_grid_cell_value(pid, 3, 4) == :black
 
         assert Board.reset(pid) == :ok
@@ -100,40 +100,40 @@ defmodule BoardTest do
         {:ok, pid} = Board.start_link()
 
         # Move 1 - 10.
-        assert Board.make_move(pid, 5, 6, :black) == :ok
-        assert Board.make_move(pid, 6, 6, :white) == :ok
-        assert Board.make_move(pid, 6, 5, :black) == :ok
-        assert Board.make_move(pid, 4, 6, :white) == :ok
-        assert Board.make_move(pid, 3, 5, :black) == :ok
-        assert Board.make_move(pid, 5, 3, :white) == :ok
-        assert Board.make_move(pid, 4, 3, :black) == :ok
-        assert Board.make_move(pid, 7, 5, :white) == :ok
-        assert Board.make_move(pid, 6, 3, :black) == :ok
-        assert Board.make_move(pid, 2, 5, :white) == :ok
+        assert Board.make_move(pid, 5, 6, :black) != []
+        assert Board.make_move(pid, 6, 6, :white) != []
+        assert Board.make_move(pid, 6, 5, :black) != []
+        assert Board.make_move(pid, 4, 6, :white) != []
+        assert Board.make_move(pid, 3, 5, :black) != []
+        assert Board.make_move(pid, 5, 3, :white) != []
+        assert Board.make_move(pid, 4, 3, :black) != []
+        assert Board.make_move(pid, 7, 5, :white) != []
+        assert Board.make_move(pid, 6, 3, :black) != []
+        assert Board.make_move(pid, 2, 5, :white) != []
 
         # Move 11 - 20.
-        assert Board.make_move(pid, 3, 6, :black) == :ok
-        assert Board.make_move(pid, 2, 6, :white) == :ok
-        assert Board.make_move(pid, 4, 7, :black) == :ok
-        assert Board.make_move(pid, 5, 7, :white) == :ok
-        assert Board.make_move(pid, 5, 8, :black) == :ok
-        assert Board.make_move(pid, 6, 4, :white) == :ok
-        assert Board.make_move(pid, 7, 4, :black) == :ok
-        assert Board.make_move(pid, 5, 2, :white) == :ok
-        assert Board.make_move(pid, 8, 6, :black) == :ok
-        assert Board.make_move(pid, 3, 2, :white) == :ok
+        assert Board.make_move(pid, 3, 6, :black) != []
+        assert Board.make_move(pid, 2, 6, :white) != []
+        assert Board.make_move(pid, 4, 7, :black) != []
+        assert Board.make_move(pid, 5, 7, :white) != []
+        assert Board.make_move(pid, 5, 8, :black) != []
+        assert Board.make_move(pid, 6, 4, :white) != []
+        assert Board.make_move(pid, 7, 4, :black) != []
+        assert Board.make_move(pid, 5, 2, :white) != []
+        assert Board.make_move(pid, 8, 6, :black) != []
+        assert Board.make_move(pid, 3, 2, :white) != []
 
         # Move 21 - 30.
-        assert Board.make_move(pid, 6, 2, :black) == :ok
-        assert Board.make_move(pid, 3, 4, :white) == :ok
-        assert Board.make_move(pid, 6, 7, :black) == :ok
-        assert Board.make_move(pid, 8, 4, :white) == :ok
-        assert Board.make_move(pid, 8, 3, :black) == :ok
-        assert Board.make_move(pid, 8, 5, :white) == :ok
-        assert Board.make_move(pid, 3, 3, :black) == :ok
-        assert Board.make_move(pid, 7, 6, :white) == :ok
-        assert Board.make_move(pid, 3, 1, :black) == :ok
-        assert Board.make_move(pid, 6, 1, :white) == :ok
+        assert Board.make_move(pid, 6, 2, :black) != []
+        assert Board.make_move(pid, 3, 4, :white) != []
+        assert Board.make_move(pid, 6, 7, :black) != []
+        assert Board.make_move(pid, 8, 4, :white) != []
+        assert Board.make_move(pid, 8, 3, :black) != []
+        assert Board.make_move(pid, 8, 5, :white) != []
+        assert Board.make_move(pid, 3, 3, :black) != []
+        assert Board.make_move(pid, 7, 6, :white) != []
+        assert Board.make_move(pid, 3, 1, :black) != []
+        assert Board.make_move(pid, 6, 1, :white) != []
 
         # State after move 30.
         assert Board.to_string(pid) == """
@@ -160,41 +160,41 @@ defmodule BoardTest do
         assert Board.can_move?(pid, :white)
 
         # Move 31 - 40.
-        assert Board.make_move(pid, 2, 3, :black) == :ok
-        assert Board.make_move(pid, 4, 8, :white) == :ok
-        assert Board.make_move(pid, 1, 5, :black) == :ok
-        assert Board.make_move(pid, 4, 2, :white) == :ok
-        assert Board.make_move(pid, 6, 8, :black) == :ok
-        assert Board.make_move(pid, 3, 7, :white) == :ok
-        assert Board.make_move(pid, 7, 7, :black) == :ok
-        assert Board.make_move(pid, 1, 3, :white) == :ok
-        assert Board.make_move(pid, 1, 4, :black) == :ok
-        assert Board.make_move(pid, 1, 6, :white) == :ok
+        assert Board.make_move(pid, 2, 3, :black) != []
+        assert Board.make_move(pid, 4, 8, :white) != []
+        assert Board.make_move(pid, 1, 5, :black) != []
+        assert Board.make_move(pid, 4, 2, :white) != []
+        assert Board.make_move(pid, 6, 8, :black) != []
+        assert Board.make_move(pid, 3, 7, :white) != []
+        assert Board.make_move(pid, 7, 7, :black) != []
+        assert Board.make_move(pid, 1, 3, :white) != []
+        assert Board.make_move(pid, 1, 4, :black) != []
+        assert Board.make_move(pid, 1, 6, :white) != []
 
         # Move 41 - 50.
-        assert Board.make_move(pid, 8, 7, :black) == :ok
-        assert Board.make_move(pid, 2, 4, :white) == :ok
-        assert Board.make_move(pid, 5, 1, :black) == :ok
-        assert Board.make_move(pid, 1, 2, :white) == :ok
-        assert Board.make_move(pid, 4, 1, :black) == :ok
-        assert Board.make_move(pid, 2, 1, :white) == :ok
-        assert Board.make_move(pid, 2, 7, :black) == :ok
-        assert Board.make_move(pid, 2, 2, :white) == :ok
-        assert Board.make_move(pid, 1, 1, :black) == :ok
-        assert Board.make_move(pid, 8, 8, :white) == :ok
+        assert Board.make_move(pid, 8, 7, :black) != []
+        assert Board.make_move(pid, 2, 4, :white) != []
+        assert Board.make_move(pid, 5, 1, :black) != []
+        assert Board.make_move(pid, 1, 2, :white) != []
+        assert Board.make_move(pid, 4, 1, :black) != []
+        assert Board.make_move(pid, 2, 1, :white) != []
+        assert Board.make_move(pid, 2, 7, :black) != []
+        assert Board.make_move(pid, 2, 2, :white) != []
+        assert Board.make_move(pid, 1, 1, :black) != []
+        assert Board.make_move(pid, 8, 8, :white) != []
 
         # Move 51 - 60.
-        assert Board.make_move(pid, 3, 8, :black) == :ok
-        assert Board.make_move(pid, 2, 8, :white) == :ok
-        assert Board.make_move(pid, 7, 3, :black) == :ok
-        assert Board.make_move(pid, 7, 8, :white) == :ok
-        assert Board.make_move(pid, 7, 1, :black) == :ok
+        assert Board.make_move(pid, 3, 8, :black) != []
+        assert Board.make_move(pid, 2, 8, :white) != []
+        assert Board.make_move(pid, 7, 3, :black) != []
+        assert Board.make_move(pid, 7, 8, :white) != []
+        assert Board.make_move(pid, 7, 1, :black) != []
 
-        assert Board.make_move(pid, 7, 2, :white) == :ok
-        assert Board.make_move(pid, 8, 2, :black) == :ok
-        assert Board.make_move(pid, 8, 1, :white) == :ok
-        assert Board.make_move(pid, 1, 7, :black) == :ok
-        assert Board.make_move(pid, 1, 8, :white) == :ok
+        assert Board.make_move(pid, 7, 2, :white) != []
+        assert Board.make_move(pid, 8, 2, :black) != []
+        assert Board.make_move(pid, 8, 1, :white) != []
+        assert Board.make_move(pid, 1, 7, :black) != []
+        assert Board.make_move(pid, 1, 8, :white) != []
 
         # State after all legal moves.
         assert Board.to_string(pid) == """

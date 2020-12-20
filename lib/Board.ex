@@ -37,9 +37,18 @@ defmodule OthelloEngine.Board do
     Returns the value of a cell in the grid.
     """
     def get_grid_cell_value(board_pid, row, col) do
+        {_, _, color} = get_grid_cell(board_pid, row, col)
+        color
+    end
+
+
+    @doc """
+    Returns the value of a cell in the grid.
+    """
+    def get_grid_cell(board_pid, row, col) do
         grid = Agent.get(board_pid, fn state -> state end)
 
-        get_cell_value(grid, row, col)
+        {row, col, get_cell_value(grid, row, col)}
     end
 
 
@@ -68,8 +77,8 @@ defmodule OthelloEngine.Board do
     def make_move(board_pid, row, col, color) do
         case calculate_move(board_pid, row, col, color) do
             []      -> :not_possible
-            pieces  -> flip_pieces(board_pid, pieces)
-                       set_grid_cell_value(board_pid, row, col, color)
+            pieces  -> flip_pieces(board_pid, pieces) ++
+                       [set_grid_cell_value(board_pid, row, col, color)]
         end
     end
 
@@ -301,6 +310,7 @@ defmodule OthelloEngine.Board do
             fn state -> Map.update!(state, key(row, col),
                             fn _ -> opposite_color end)
             end)
+        get_grid_cell(board_pid, row, col)
     end
 
 
@@ -318,6 +328,7 @@ defmodule OthelloEngine.Board do
             fn state -> Map.update!(state, key(row, col),
                             fn _ -> color end)
             end)
+        get_grid_cell(board_pid, row, col)
     end
 
 
