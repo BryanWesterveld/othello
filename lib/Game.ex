@@ -61,13 +61,12 @@ defmodule OthelloEngine.Game do
     def handle_call({:make_move, player, row, col}, _from, state) do
         player_pid = Map.get(state, player)
         color = Player.get_color(player_pid)
-        IO.inspect(color)
 
         Board.make_move(state.board, row, col, color)
-        |> IO.inspect()
         |> log_move(player, state, row, col)
         |> pass_check(player, state)
         |> win_check(player, state)
+        |> possible_moves_check(player, state)
     end
 
 
@@ -102,8 +101,8 @@ defmodule OthelloEngine.Game do
     end
 
 
-    defp win_check({pieces, :no_pass}, _player, state) do
-        {:reply, {pieces, :no_pass, :no_win}, state}
+    defp win_check({pieces, :no_pass}, _player, _state) do
+       {pieces, :no_pass, :no_win}
     end
 
     defp win_check({pieces, :pass}, player, state) do
@@ -116,7 +115,37 @@ defmodule OthelloEngine.Game do
             false   -> :win
         end
 
-        {:reply, {pieces, :pass, win_status}, state}
+        {pieces, :pass, win_status}
+    end
+
+
+    defp possible_moves_check({:not_possible, pass, win}, player, state) do
+        player_pid = Map.get(state, player)
+        color = Player.get_color(player_pid)
+        moves = Board.get_possible_moves(state.board, color)
+
+        {:reply, {:not_possible, pass, win, moves}, state}
+    end
+
+
+    defp possible_moves_check({pieces, :pass, :win}, _player, state) do
+        {:reply, {pieces, :pass, :win, []}, state}
+    end
+
+    defp possible_moves_check({pieces, :pass, win}, player, state) do
+        player_pid = Map.get(state, player)
+        color = Player.get_color(player_pid)
+        moves = Board.get_possible_moves(state.board, color)
+
+        {:reply, {pieces, :pass, win, moves}, state}
+    end
+
+    defp possible_moves_check({pieces, :no_pass, win}, player, state) do
+        player_pid = Map.get(state, opposite_player(player))
+        color = Player.get_color(player_pid)
+        moves = Board.get_possible_moves(state.board, color)
+
+        {:reply, {pieces, :no_pass, win, moves}, state}
     end
 
 
