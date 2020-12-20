@@ -14,6 +14,8 @@ defmodule BoardTest do
 
         assert Board.can_move?(pid, :black)
         assert Board.can_move?(pid, :white)
+
+        assert Board.get_winner(pid) == :no_winner
     end
 
 
@@ -57,6 +59,7 @@ defmodule BoardTest do
 
         refute Board.can_move?(pid, :black)
         refute Board.can_move?(pid, :white)
+        assert Board.get_winner(pid) == :black
     end
 
 
@@ -66,8 +69,16 @@ defmodule BoardTest do
         assert Board.make_move(pid, 3, 4, :black) != []
         assert Board.get_grid_cell_value(pid, 3, 4) == :black
 
+        assert Board.make_move(pid, 6, 5, :black) != []
+        assert Board.get_grid_cell_value(pid, 6, 5) == :black
+
+        assert Board.get_winner(pid) == :black
         assert Board.reset(pid) == :ok
+
         assert Board.get_grid_cell_value(pid, 3, 4) == :none
+        assert Board.get_grid_cell_value(pid, 6, 5) == :none
+        assert Board.get_winner(pid) == :no_winner
+
     end
 
 
@@ -158,6 +169,7 @@ defmodule BoardTest do
 
         assert Board.can_move?(pid, :black)
         assert Board.can_move?(pid, :white)
+        assert Board.get_winner(pid) == :no_winner
 
         # Move 31 - 40.
         assert Board.make_move(pid, 2, 3, :black) != []
@@ -219,5 +231,6 @@ defmodule BoardTest do
 
         refute Board.can_move?(pid, :black)
         refute Board.can_move?(pid, :white)
+        assert Board.get_winner(pid) == :tie
     end
 end

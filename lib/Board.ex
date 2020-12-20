@@ -84,6 +84,30 @@ defmodule OthelloEngine.Board do
 
 
     @doc """
+    Returns the winner or :none when the game is not finished.
+    """
+    def get_winner(board_pid) do
+        with false <- can_move?(board_pid, :black),
+             false <- can_move?(board_pid, :white)
+        do
+            black_stones = count_stones(board_pid, :black)
+            white_stones = count_stones(board_pid, :white)
+
+            cond do
+                black_stones == white_stones ->
+                    :tie
+                black_stones >  white_stones ->
+                    :black
+                black_stones <  white_stones ->
+                    :white
+            end
+        else
+            _     -> :no_winner
+        end
+    end
+
+
+    @doc """
     Converts the entire grid to a string. Used to print the state of the game
     for debugging. A hollow circle is used to represent white stones, a filled
     circle is used to represent black stones.
@@ -329,6 +353,15 @@ defmodule OthelloEngine.Board do
                             fn _ -> color end)
             end)
         get_grid_cell(board_pid, row, col)
+    end
+
+
+    ###
+    # Count the amount of stones of a color on the board.
+    defp count_stones(board_pid, color) do
+        Enum.reduce(get_board(board_pid), 0, fn {_, c}, acc ->
+            if c == color, do: acc + 1,  else: acc
+        end)
     end
 
 
