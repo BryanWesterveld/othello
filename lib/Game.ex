@@ -11,19 +11,19 @@ defmodule OthelloEngine.Game do
 
 
     def init(name) do
-        {:ok, board} = Board.start_link()
-        {:ok, history} = History.start_link()
-        {:ok, playerA} = Player.start_link(:black, name)
-        {:ok, playerB} = Player.start_link(:white)
-        {:ok, fsm} = Rules.start_link()
+        state = init_state(name)
 
-        {:ok, %Game{board: board, history: history,
-                    playerA: playerA, playerB: playerB, fsm: fsm}}
+        {:ok, state}
     end
 
 
     def add_player(game_pid, name) when not is_nil(name) do
         GenServer.call(game_pid, {:add_player, name})
+    end
+
+
+    def request_rematch(game_pid, player) do
+        GenServer.call(game_pid, {:request_rematch, player})
     end
 
 
@@ -37,6 +37,15 @@ defmodule OthelloEngine.Game do
     end
 
 
+    def get_fsm_state(game_pid) do
+        GenServer.call(game_pid, {:fsmstate_return})
+    end
+
+    def handle_call({:fsmstate_return}, _from, state) do
+        {:reply, state.fsm, state}
+    end
+
+
     def stop(game_pid) do
         GenServer.cast(game_pid, :stop)
     end
@@ -47,6 +56,15 @@ defmodule OthelloEngine.Game do
     end
 
 
+    def handle_call({:request_rematch, player}, _from, state) do
+        player_pid = Map.get(state, player)
+        color = Player.get_color(player_pid)
+
+        Rules.rematch(state.fsm, color)
+        |> rematch_reply(state, player)
+    end
+
+
     def handle_call({:get_winner}, _from, state) do
         winner = Board.get_winner(state.board)
         {:reply, winner, state}
@@ -54,8 +72,8 @@ defmodule OthelloEngine.Game do
 
 
     def handle_call({:add_player, name}, _from, state) do
-        Player.set_name(state.playerB, name)
-        {:reply, :ok, state}
+        Rules.add_player(state.fsm)
+        |> add_player_reply(state, name)
     end
 
 
@@ -63,23 +81,34 @@ defmodule OthelloEngine.Game do
         player_pid = Map.get(state, player)
         color = Player.get_color(player_pid)
 
+        Rules.allowed_to_make_move(state.fsm, color)
+        |> make_move_reply(state, player, row, col, color)
+    end
+
+
+    defp make_move_reply(:ok, state, player, row, col, color) do
         Board.make_move(state.board, row, col, color)
-        |> log_move(player, state, row, col)
+        |> move_check(player, state, row, col)
         |> pass_check(player, state)
         |> win_check(player, state)
         |> possible_moves_check(player, state)
     end
 
+    defp make_move_reply(reply, state, _player, _row, _col, _color) do
+        {:reply, reply, state}
+    end
 
-    defp log_move(:not_possible, _player, _state, _row, _col) do
+
+    defp move_check(:not_possible, _player, _state, _row, _col) do
         :not_possible
     end
 
-    defp log_move(pieces, player, state, row, col) do
+    defp move_check(pieces, player, state, row, col) do
         player_pid = Map.get(state, player)
         color = Player.get_color(player_pid)
 
         History.add_move(state.history, row, col, color)
+        Rules.make_move(state.fsm, color)
         pieces
     end
 
@@ -95,7 +124,8 @@ defmodule OthelloEngine.Game do
         pass_status =
         case Board.can_move?(state.board, color) do
             true    -> :no_pass
-            false   -> :pass
+            false   -> Rules.pass(state.fsm, color)
+                       :pass
         end
 
         {pieces, pass_status}
@@ -113,12 +143,17 @@ defmodule OthelloEngine.Game do
         win_status =
         case Board.can_move?(state.board, color) do
             true    -> :no_win
-            false   -> :win
+            false   -> Rules.win(state.fsm)
+                       :win
         end
 
         {pieces, :pass, win_status}
     end
 
+
+    defp possible_moves_check({pieces, :pass, :win}, _player, state) do
+        {:reply, {pieces, :pass, :win, []}, state}
+    end
 
     defp possible_moves_check({:not_possible, pass, win}, player, state) do
         player_pid = Map.get(state, player)
@@ -126,11 +161,6 @@ defmodule OthelloEngine.Game do
         moves = Board.get_possible_moves(state.board, color)
 
         {:reply, {:not_possible, pass, win, moves}, state}
-    end
-
-
-    defp possible_moves_check({pieces, :pass, :win}, _player, state) do
-        {:reply, {pieces, :pass, :win, []}, state}
     end
 
     defp possible_moves_check({pieces, :pass, win}, player, state) do
@@ -156,5 +186,43 @@ defmodule OthelloEngine.Game do
 
     defp opposite_player(:playerB) do
         :playerA
+    end
+
+
+    defp add_player_reply(:ok, state, name) do
+        Player.set_name(state.playerB, name)
+        {:reply, :ok, state}
+    end
+
+    defp add_player_reply(reply, state, _name) do
+        {:reply, reply, state}
+    end
+
+    defp rematch_reply(:ok, state, _player) do
+        case Rules.show_current_state(state.fsm) do
+            :initialized -> History.reset(state.history)
+                           Board.reset(state.board)
+                           Player.flip_color(state.playerA)
+                           Player.flip_color(state.playerB)
+                           Rules.add_player(state.fsm)
+                           {:reply, :rematched, state}
+            _            -> {:reply, :rematch_pending, state}
+        end
+    end
+
+    defp rematch_reply(reply, state, _player) do
+        {:reply, reply, state}
+    end
+
+
+    defp init_state(name) do
+        {:ok, board} = Board.start_link()
+        {:ok, history} = History.start_link()
+        {:ok, playerA} = Player.start_link(:black, name)
+        {:ok, playerB} = Player.start_link(:white)
+        {:ok, fsm} = Rules.start_link()
+
+        %Game{board: board, history: history,
+              playerA: playerA, playerB: playerB, fsm: fsm}
     end
 end

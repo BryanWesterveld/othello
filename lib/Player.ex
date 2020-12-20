@@ -30,6 +30,13 @@ defmodule OthelloEngine.Player do
     end
 
 
+    def flip_color(player_pid) do
+        Agent.update(player_pid, fn state ->
+            Map.put(state, :color, opposite_color(state.color))
+        end)
+    end
+
+
     defp name_to_string(:none) do
         "Anonymous"
     end
@@ -37,4 +44,14 @@ defmodule OthelloEngine.Player do
     defp name_to_string(name) do
         ~s("#{name}")
     end
+
+
+    defp opposite_color(:white) do
+        :black
+    end
+
+    defp opposite_color(:black) do
+        :white
+    end
+
 end

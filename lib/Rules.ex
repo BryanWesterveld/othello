@@ -26,6 +26,11 @@ defmodule OthelloEngine.Rules do
     end
 
 
+    def allowed_to_make_move(fsm_pid, color) do
+        :gen_statem.call(fsm_pid, {:allowed_to_make_move, color})
+    end
+
+
     def make_move(fsm_pid, color) do
         :gen_statem.call(fsm_pid, {:make_move, color})
     end
@@ -72,6 +77,10 @@ defmodule OthelloEngine.Rules do
         {:next_state, :white_turn, state_data, {:reply, from, :ok}}
     end
 
+    def black_turn({:call, from}, {:allowed_to_make_move, :black}, _state_data) do
+        {:keep_state_and_data, {:reply, from, :ok}}
+    end
+
     def black_turn({:call, from}, :win, state_data) do
         {:next_state, :game_over, state_data, {:reply, from, :ok}}
     end
@@ -90,7 +99,11 @@ defmodule OthelloEngine.Rules do
     end
 
     def white_turn({:call, from}, {:make_move, :white}, state_data) do
-        {:next_state, :black, state_data, {:reply, from, :ok}}
+        {:next_state, :black_turn, state_data, {:reply, from, :ok}}
+    end
+
+    def white_turn({:call, from}, {:allowed_to_make_move, :white}, _state_data) do
+        {:keep_state_and_data, {:reply, from, :ok}}
     end
 
     def white_turn({:call, from}, :win, state_data) do
