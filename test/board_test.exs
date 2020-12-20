@@ -82,6 +82,14 @@ defmodule BoardTest do
     end
 
 
+    test "Available moves" do
+        {:ok, pid} = Board.start_link()
+
+        assert Board.get_possible_moves(pid, :black) == [{3, 4}, {4, 3},
+                                                         {5, 6}, {6, 5}]
+    end
+
+
     test "String representation" do
         {:ok, pid} = Board.start_link()
 

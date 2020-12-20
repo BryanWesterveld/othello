@@ -72,6 +72,19 @@ defmodule OthelloEngine.Board do
 
 
     @doc """
+    Return a list of moves a color can do.
+    """
+    def get_possible_moves(board_pid, color) do
+        moves = for row <- 1..8, col <- 1..8 do
+            {row, col}
+        end
+        Enum.filter(moves, fn {row, col} ->
+            calculate_move(board_pid, row, col, color) != []
+        end)
+    end
+
+
+    @doc """
     Makes a move or returns :not_possible.
     """
     def make_move(board_pid, row, col, color) do
