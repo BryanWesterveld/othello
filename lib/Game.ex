@@ -1,8 +1,8 @@
 defmodule OthelloEngine.Game do
     use GenServer
-    alias OthelloEngine.{Board, History, Game, Player}
+    alias OthelloEngine.{Board, History, Game, Player, Rules}
 
-    defstruct board: :none, history: :none, playerA: :none, playerB: :none
+    defstruct board: :none, history: :none, playerA: :none, playerB: :none, fsm: :none
 
 
     def start_link(game_id, name) when not is_nil(game_id) and not is_nil(name) do
@@ -15,9 +15,10 @@ defmodule OthelloEngine.Game do
         {:ok, history} = History.start_link()
         {:ok, playerA} = Player.start_link(:black, name)
         {:ok, playerB} = Player.start_link(:white)
+        {:ok, fsm} = Rules.start_link()
 
         {:ok, %Game{board: board, history: history,
-                    playerA: playerA, playerB: playerB}}
+                    playerA: playerA, playerB: playerB, fsm: fsm}}
     end
 
 
