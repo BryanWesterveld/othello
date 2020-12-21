@@ -6,7 +6,7 @@ defmodule OthelloEngine.Game do
 
 
     def start_link(game_id, name) when not is_nil(game_id) and not is_nil(name) do
-        GenServer.start_link(__MODULE__, name, name: {:global, "game:othello:#{game_id}"})
+        GenServer.start_link(__MODULE__, name, name: via_tuple(game_id))
     end
 
 
@@ -48,6 +48,11 @@ defmodule OthelloEngine.Game do
 
     def stop(game_pid) do
         GenServer.cast(game_pid, :stop)
+    end
+
+
+    def via_tuple(game_id) do
+        {:via, Registry, {Registry.Game, game_id}}
     end
 
 

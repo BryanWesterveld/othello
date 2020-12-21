@@ -10,6 +10,8 @@ defmodule OthelloEngine.Application do
     children = [
       # Starts a worker by calling: OthelloEngine.Worker.start_link(arg)
       # {OthelloEngine.Worker, arg}
+      {Registry, keys: :unique, name: Registry.Game},
+      OthelloEngine.GameSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
