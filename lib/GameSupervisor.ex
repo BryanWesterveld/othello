@@ -30,7 +30,7 @@ defmodule OthelloEngine.GameSupervisor do
     end
 
 
-    defp pid_from_id(game_id) do
+    def pid_from_id(game_id) do
         game_id
         |> Game.via_tuple()
         |> GenServer.whereis()
