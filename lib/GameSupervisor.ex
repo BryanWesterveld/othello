@@ -22,17 +22,22 @@ defmodule OthelloEngine.GameSupervisor do
 
 
     def stop_game(game_id) do
-        try do
-            DynamicSupervisor.terminate_child(__MODULE__, pid_from_id(game_id))
-        rescue
-            FunctionClauseError -> :no_game
+        case pid_from_id(game_id) do
+            {:ok, pid}       -> DynamicSupervisor.terminate_child(__MODULE__, pid)
+            {:error, reason} -> reason
+            _                -> :error
         end
     end
 
 
     def pid_from_id(game_id) do
-        game_id
+        pid = game_id
         |> Game.via_tuple()
         |> GenServer.whereis()
+
+        case pid do
+            nil -> {:error, :no_game}
+            _   -> {:ok, pid}
+        end
     end
 end

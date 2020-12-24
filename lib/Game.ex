@@ -37,6 +37,11 @@ defmodule OthelloEngine.Game do
     end
 
 
+    def get_full_state(game_pid) do
+        GenServer.call(game_pid, :get_full_state)
+    end
+
+
     def get_fsm_state(game_pid) do
         GenServer.call(game_pid, {:fsmstate_return})
     end
@@ -88,6 +93,18 @@ defmodule OthelloEngine.Game do
 
         Rules.allowed_to_make_move(state.fsm, color)
         |> make_move_reply(state, player, row, col, color)
+    end
+
+
+    def handle_call(:get_full_state, _from, state) do
+        full_state = %{}
+        |> Map.put(:board, Board.get_board(state.board))
+        |> Map.put(:playerA, Player.get_name(state.playerA))
+        |> Map.put(:playerB, Player.get_name(state.playerB))
+        |> Map.put(:turn, get_turn_player(state))
+        |> get_full_state_possible_moves(state)
+
+        {:reply, full_state, state}
     end
 
 
@@ -206,11 +223,11 @@ defmodule OthelloEngine.Game do
     defp rematch_reply(:ok, state, _player) do
         case Rules.show_current_state(state.fsm) do
             :initialized -> History.reset(state.history)
-                           Board.reset(state.board)
-                           Player.flip_color(state.playerA)
-                           Player.flip_color(state.playerB)
-                           Rules.add_player(state.fsm)
-                           {:reply, :rematched, state}
+                            Board.reset(state.board)
+                            Player.flip_color(state.playerA)
+                            Player.flip_color(state.playerB)
+                            Rules.add_player(state.fsm)
+                            {:reply, :rematched, state}
             _            -> {:reply, :rematch_pending, state}
         end
     end
@@ -229,5 +246,30 @@ defmodule OthelloEngine.Game do
 
         %Game{board: board, history: history,
               playerA: playerA, playerB: playerB, fsm: fsm}
+    end
+
+
+    defp get_turn_player(state) do
+        case Rules.show_current_state(state.fsm) do
+            :black_turn -> get_player_by_color(state, :black)
+            :white_turn -> get_player_by_color(state, :white)
+            _   -> :finished
+        end
+    end
+
+
+    defp get_player_by_color(state, color) do
+        case Player.get_color(state.playerA) do
+            ^color   -> :playerA
+            _        -> :playerB
+        end
+    end
+
+
+    defp get_full_state_possible_moves(%{turn: player} = full_state, state) do
+        player_pid = Map.get(state, player)
+        color = Player.get_color(player_pid)
+        moves = Board.get_possible_moves(state.board, color)
+        Map.put(full_state, :possible_moves, moves)
     end
 end

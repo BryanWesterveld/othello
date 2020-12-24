@@ -76,11 +76,14 @@ defmodule OthelloEngine.Board do
     """
     def get_possible_moves(board_pid, color) do
         moves = for row <- 1..8, col <- 1..8 do
-            {row, col}
-        end
-        Enum.filter(moves, fn {row, col} ->
+                    {row, col}
+                end
+        |> Enum.filter(fn {row, col} ->
             calculate_move(board_pid, row, col, color) != []
-        end)
+           end)
+        |> Enum.map(fn {row, col} ->
+            "#{row}#{col}"
+           end)
     end
 
 
