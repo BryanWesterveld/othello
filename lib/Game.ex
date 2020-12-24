@@ -260,13 +260,13 @@ defmodule OthelloEngine.Game do
 
     defp get_player_by_color(state, color) do
         case Player.get_color(state.playerA) do
-            ^color   -> :playerA
-            _        -> :playerB
+            ^color   -> %{player: :playerA, color: color}
+            _        -> %{player: :playerB , color: Player.opposite_color(color)}
         end
     end
 
 
-    defp get_full_state_possible_moves(%{turn: player} = full_state, state) do
+    defp get_full_state_possible_moves(%{turn: %{player: player}} = full_state, state) do
         player_pid = Map.get(state, player)
         color = Player.get_color(player_pid)
         moves = Board.get_possible_moves(state.board, color)

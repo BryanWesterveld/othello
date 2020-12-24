@@ -46,11 +46,11 @@ defmodule OthelloEngine.Player do
     end
 
 
-    defp opposite_color(:white) do
+    def opposite_color(:white) do
         :black
     end
 
-    defp opposite_color(:black) do
+    def opposite_color(:black) do
         :white
     end
 
