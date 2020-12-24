@@ -75,9 +75,7 @@ defmodule OthelloEngine.Board do
     Return a list of moves a color can do.
     """
     def get_possible_moves(board_pid, color) do
-        moves = for row <- 1..8, col <- 1..8 do
-                    {row, col}
-                end
+        for row <- 1..8, col <- 1..8 do {row, col} end
         |> Enum.filter(fn {row, col} ->
             calculate_move(board_pid, row, col, color) != []
            end)
@@ -95,6 +93,7 @@ defmodule OthelloEngine.Board do
             []      -> :not_possible
             pieces  -> flip_pieces(board_pid, pieces) ++
                        [set_grid_cell_value(board_pid, row, col, color)]
+                       |> Enum.map(fn {row, col, color} -> %{index: "#{row}#{col}", color: color} end)
         end
     end
 

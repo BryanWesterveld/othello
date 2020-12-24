@@ -77,7 +77,13 @@ defmodule OthelloEngine.Game do
 
     def handle_call({:get_winner}, _from, state) do
         winner = Board.get_winner(state.board)
-        {:reply, winner, state}
+        winner =
+        case winner do
+            :black -> get_player_by_color(state, :black)
+            :white -> get_player_by_color(state, :white)
+            val    -> val
+        end
+        {:reply, %{winner: winner}, state}
     end
 
 
@@ -114,6 +120,7 @@ defmodule OthelloEngine.Game do
         |> pass_check(player, state)
         |> win_check(player, state)
         |> possible_moves_check(player, state)
+        |> convert_move_reply_to_map()
     end
 
     defp make_move_reply(reply, state, _player, _row, _col, _color) do
@@ -199,6 +206,16 @@ defmodule OthelloEngine.Game do
         moves = Board.get_possible_moves(state.board, color)
 
         {:reply, {pieces, :no_pass, win, moves}, state}
+    end
+
+
+    defp convert_move_reply_to_map({reply, {pieces, pass, win, moves}, state}) do
+        map = %{}
+        |> Map.put(:touched_pieces, pieces)
+        |> Map.put(:pass, pass)
+        |> Map.put(:win, win)
+        |> Map.put(:possible_moves, moves)
+        {reply, map, state}
     end
 
 
