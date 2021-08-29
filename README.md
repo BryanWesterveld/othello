@@ -1,6 +1,6 @@
 # OthelloEngine
 
-**TODO: Add description**
+This is an implementation of an Othello engine. When paired with a suitable interface, like a Phoenix website, this engine can be used to play games of Othello. Othello is a simple abstract strategy game and is played by two players. The players alternate turns to place stones on the board. The game ends when no more moves are possible and the player with the most stones of his color wins.
 
 ## Installation
 
